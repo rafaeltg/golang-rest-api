@@ -47,19 +47,14 @@ func (h CustomerHandler) Create(c *gin.Context) {
 	var customerJson models.Customer
 	c.Bind(&customerJson)
 
-	fmt.Println(customerJson)
-
 	if customerJson.Name == "" {
-		fmt.Println("ERRRR")
-		c.JSON(422, gin.H{"error": "Customer name could be empty"})
-		return
-	}
-
-	fmt.Println("AAAAAAAAAAAAA", customerJson)
-	if err := h.d.Create(customerJson); err != nil {
-		c.JSON(500, gin.H{"error": fmt.Sprintf("Could not create customer (%v)", customerJson)})
+		c.JSON(422, gin.H{"error": "Customer name could not be empty"})
 	} else {
-		c.JSON(201, gin.H{"success": customerJson})
+		if err := h.d.Create(customerJson); err != nil {
+			c.JSON(500, gin.H{"error": fmt.Sprintf("Could not create customer (%v)", customerJson.Name)})
+		} else {
+			c.JSON(201, gin.H{"success": customerJson})
+		}
 	}
 }
 
@@ -67,7 +62,7 @@ func (h CustomerHandler) Update(c *gin.Context) {
 	customerId := c.Params.ByName("id")
 	customer, err := h.d.Get(customerId)
 
-	if customer.Id == "" || err != nil {
+	if err != nil || customer.Id == "" {
 		c.JSON(404, gin.H{"error": "Customer not found"})
 		return
 	}
@@ -77,11 +72,11 @@ func (h CustomerHandler) Update(c *gin.Context) {
 
 	if customerId != newCustomer.Id {
 		c.JSON(422, gin.H{"error": "Could not update customer (Invalid ID)"})
-	}
-
-	if err = h.d.Update(customer.Id, newCustomer); err != nil {
-		c.JSON(422, gin.H{"error": "Could not update customer"})
 	} else {
-		c.JSON(200, gin.H{"success": newCustomer})
+		if err = h.d.Update(customer.Id, newCustomer); err != nil {
+			c.JSON(422, gin.H{"error": "Could not update customer"})
+		} else {
+			c.JSON(200, gin.H{"success": newCustomer})
+		}
 	}
 }

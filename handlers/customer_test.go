@@ -1,17 +1,16 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-rest-api/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
 	"net/http"
 	"net/http/httptest"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"bytes"
+	"testing"
 )
 
 type CustomerDALMock struct {
@@ -53,7 +52,7 @@ func getMockRouter(h *CustomerHandler) *gin.Engine {
 
 func TestCustomerHandler_GetAll(t *testing.T) {
 	d := new(CustomerDALMock)
-	d.On("GetAll").Return([]models.Customer{{Id:"123", Name:"John"}}, nil)
+	d.On("GetAll").Return([]models.Customer{{Id: "123", Name: "John"}}, nil)
 	h := NewCustomerHandlerMock(d)
 
 	r := getMockRouter(h)
@@ -75,7 +74,7 @@ func TestCustomerHandler_GetAll(t *testing.T) {
 
 func TestCustomerHandler_GetAll_Error(t *testing.T) {
 	d := new(CustomerDALMock)
-	d.On("GetAll").Return([]models.Customer{{Id:"123", Name:"John"}}, errors.New("Test"))
+	d.On("GetAll").Return([]models.Customer{{Id: "123", Name: "John"}}, errors.New("Test"))
 	h := NewCustomerHandlerMock(d)
 
 	r := getMockRouter(h)
@@ -93,7 +92,7 @@ func TestCustomerHandler_GetAll_Error(t *testing.T) {
 
 func TestCustomerHandler_Get(t *testing.T) {
 	d := new(CustomerDALMock)
-	d.On("Get", "123").Return(models.Customer{Id:"123", Name:"John"}, nil)
+	d.On("Get", "123").Return(models.Customer{Id: "123", Name: "John"}, nil)
 	h := NewCustomerHandlerMock(d)
 
 	r := getMockRouter(h)
@@ -114,7 +113,7 @@ func TestCustomerHandler_Get(t *testing.T) {
 
 func TestCustomerHandler_Get_Error(t *testing.T) {
 	d := new(CustomerDALMock)
-	d.On("Get", "123").Return(models.Customer{Id:"123", Name:"John"}, errors.New("Test"))
+	d.On("Get", "123").Return(models.Customer{Id: "123", Name: "John"}, errors.New("Test"))
 	h := NewCustomerHandlerMock(d)
 
 	r := getMockRouter(h)
@@ -138,42 +137,65 @@ func TestCustomerHandler_Create(t *testing.T) {
 	r := getMockRouter(h)
 
 	newCustomer := models.Customer{
-		Id: "123",
+		Id:   "123",
 		Name: "John",
 	}
 
 	newCustomerJson, _ := json.Marshal(newCustomer)
-
 	req, _ := http.NewRequest("POST", "/customers", bytes.NewBuffer(newCustomerJson))
 	req.Header.Set("Content-Type", "application/json")
-	fmt.Println()
 	resp := httptest.NewRecorder()
 	r.ServeHTTP(resp, req)
 
 	assert.Equal(t, 201, resp.Code)
-
-	var postResp gin.H
-	json.Unmarshal(resp.Body.Bytes(), &postResp)
-
-	expectedCustomer := postResp["success"].(models.Customer)
-	assert.Equal(t, expectedCustomer.Id, "123")
-	assert.Equal(t, expectedCustomer.Name, "John")
 }
 
 func TestCustomerHandler_Create_Error(t *testing.T) {
 	d := new(CustomerDALMock)
-	d.On("Get", "123").Return(models.Customer{Id:"123", Name:"John"}, errors.New("Test"))
+	d.On("Create").Return(errors.New("Test"))
 	h := NewCustomerHandlerMock(d)
 
 	r := getMockRouter(h)
 
-	req, _ := http.NewRequest("GET", "/customers/123", nil)
+	newCustomer := models.Customer{
+		Id:   "123",
+		Name: "John",
+	}
+
+	newCustomerJson, _ := json.Marshal(newCustomer)
+	req, _ := http.NewRequest("POST", "/customers", bytes.NewBuffer(newCustomerJson))
+	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	r.ServeHTTP(resp, req)
 
-	assert.Equal(t, resp.Code, 404)
+	assert.Equal(t, 500, resp.Code)
 
 	var errorResp gin.H
 	json.Unmarshal(resp.Body.Bytes(), &errorResp)
-	assert.Equal(t, errorResp["error"], "Customer not found")
+	assert.Equal(t, errorResp["error"], "Could not create customer (John)")
+}
+
+func TestCustomerHandler_Create_InvalidPayload(t *testing.T) {
+	d := new(CustomerDALMock)
+	d.On("Create").Return(nil)
+	h := NewCustomerHandlerMock(d)
+
+	r := getMockRouter(h)
+
+	newCustomer := models.Customer{
+		Id:   "123",
+		Name: "",
+	}
+
+	newCustomerJson, _ := json.Marshal(newCustomer)
+	req, _ := http.NewRequest("POST", "/customers", bytes.NewBuffer(newCustomerJson))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	r.ServeHTTP(resp, req)
+
+	assert.Equal(t, 422, resp.Code)
+
+	var errorResp gin.H
+	json.Unmarshal(resp.Body.Bytes(), &errorResp)
+	assert.Equal(t, errorResp["error"], "Customer name could not be empty")
 }
