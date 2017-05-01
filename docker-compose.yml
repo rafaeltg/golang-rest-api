@@ -1,0 +1,17 @@
+database:
+  image: mongo:3.0
+  container_name: project_database
+  command: mongod --smallfiles --quiet --logpath=/dev/null
+
+api:
+  build: .
+  container_name: golang_rest_api
+  ports:
+    - 8000:8000
+  volumes:
+    - .:/go/src/github.com/golang-rest-api
+  links:
+    - database
+  environment:
+    - DB_HOST=project_database
+    - DB_NAME=project
