@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// Default DAL methods
 type BaseDAL interface {
 	Get(id string) (models.Customer, error)
 	GetAll() ([]models.Customer, error)

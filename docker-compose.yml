@@ -15,3 +15,4 @@ api:
   environment:
     - DB_HOST=project_database
     - DB_NAME=project
+    - PORT=8000
