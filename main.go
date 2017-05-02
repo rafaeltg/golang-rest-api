@@ -12,5 +12,5 @@ func main() {
 	customerHandler := handlers.NewCustomerHandler()
 	customerHandler.SetupCustomerHandlers(router)
 
-	router.Run(":8080")
+	router.Run(":8000")
 }

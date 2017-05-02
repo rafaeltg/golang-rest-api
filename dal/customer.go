@@ -49,7 +49,7 @@ func (c *CustomerDAL) Get(id string) (models.Customer, error) {
 	session := c.s.Copy()
 	defer session.Close()
 
-	col := session.DB("store").C("customers")
+	col := session.DB(os.Getenv("DB_NAME")).C("customers")
 
 	var customer models.Customer
 	err := col.Find(bson.M{"id": id}).One(&customer)
@@ -60,7 +60,7 @@ func (c *CustomerDAL) GetAll() ([]models.Customer, error) {
 	session := c.s.Copy()
 	defer session.Close()
 
-	col := session.DB("store").C("customers")
+	col := session.DB(os.Getenv("DB_NAME")).C("customers")
 
 	var customers []models.Customer
 	err := col.Find(nil).All(&customers)
@@ -71,7 +71,7 @@ func (c *CustomerDAL) Create(customer models.Customer) error {
 	session := c.s.Copy()
 	defer session.Close()
 
-	col := session.DB("store").C("customers")
+	col := session.DB(os.Getenv("DB_NAME")).C("customers")
 	return col.Insert(customer)
 }
 
@@ -79,6 +79,6 @@ func (c *CustomerDAL) Update(id string, customer models.Customer) error {
 	session := c.s.Copy()
 	defer session.Close()
 
-	col := session.DB("store").C("customers")
+	col := session.DB(os.Getenv("DB_NAME")).C("customers")
 	return col.Update(bson.M{"id": id}, &customer)
 }

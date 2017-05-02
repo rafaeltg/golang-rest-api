@@ -1,5 +1,5 @@
 database:
-  image: mongo:3.0
+  image: mongo:3.2
   container_name: project_database
   command: mongod --smallfiles --quiet --logpath=/dev/null
 
